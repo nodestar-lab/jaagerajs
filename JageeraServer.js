@@ -1,60 +1,83 @@
 "use strict";
-const dir_service = "../Jageerajs/services";
-const fs = require('fs');
-const express = require('express')
-var app = express();
+const dir_service = "/services";
+const fs = require("fs");
+const winston = require("winston");
+const logLevel = "debug";
 
 class JageeraServer {
-
     constructor(config) {
         this.config = config;
-        console.log("jageera server is initialise...");
+        console.log("Jageera is booting up...");
     }
 
-    readServiceDir() {
-        var files = fs.readdirSync(dir_service);
+    setupServices() {
+        let files = fs.readdirSync(this.config.path.jr + dir_service);
+        this.createLogger();
         this.configureServices(files);
+        return Promise.resolve();
+    }
+
+    createLogger() {
+        let log_format = winston.format.combine(
+            winston.format.colorize({
+                all: true
+            }),
+
+            winston.format.timestamp({
+                format: "DD-MM-YYYY HH:MM:SS"
+            }),
+            winston.format.printf(
+                info => `${info.timestamp}  ${info.level} : ${info.message}`
+            )
+        );
+        global.logger = winston.createLogger({
+            level: "debug",
+            transports: [
+                new winston.transports.Console({
+                    format: winston.format.combine(winston.format.colorize(), log_format)
+                })
+            ]
+        });
     }
 
     configureServices(files) {
-        for(let f of files){
-            var _s = require(dir_service+"/"+f);
-            this[f.split(".")[0]] = new _s(this.config,this);
+
+        let core_service_path = this.config.path.jr + dir_service;
+        for (let f of files) {
+            var _s = require(core_service_path + "/" + f);
+            this[f.split(".")[0]] = new _s(this.config, this);
         }
-    }
-
-    initialiseServices() {
-        console.log("initialising the server");
-    }
-
-    setupExpressAPI(){
 
     }
 
-    setupRoutes(routes, s_path){
+    async setupRoutes(routes, s_path) {
         this.setupAdditonalServices(routes, s_path);
-        this.setupURL(routes);
+        await this.setupURL(routes);
     }
 
-    setupAdditonalServices(routes, s_path){
-        for(let r of routes){
-            var _s = require(s_path+r.handler);
-            this[r.handler] = new _s(this.config,this);
+    setupAdditonalServices(routes, s_path) {
+        for (let r of routes) {
+            var _s = require(s_path + r.handler);
+            this[r.handler] = new _s(this.config, this);
         }
     }
 
-    setupURL(routes){
-        for(let r of routes){
-            app.get(r.route, this[r.handler].handler);
-        }
+    async setupURL(routes) {
+        this.PassportManager.initialize();
+
+        let passport = this.PassportManager.getPassport();
+
+        this.api = this.ExpressAPI.getAPI();
+        this.SessionManager.manageAPI(this.api, passport);
+        this.MailService.initialize();
+
+        await this.SetupRouter.routeSetup(routes, this.api, passport);
+        await this.startServer(this.api);
     }
 
-    startServer() {
-        app.listen(this.config.port || 3000,(res)=>{
-            console.log("application is running on port : ", this.config.port);
-        } );       
+    async startServer(app) {
+        await this.ManageServer.runServer(app);
     }
-
 }
 
 module.exports = JageeraServer;
