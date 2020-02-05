@@ -8,7 +8,7 @@ class SetupRouter {
   async routeSetup(routes, api, passport) {
     return new Promise((resolve, reject) => {
       for (let r of routes) {
-        api.post(r.route, passport.authenticate('jwt', {
+        api[r.request_type](r.route, passport.authenticate('jwt', {
           session: false
         }), async (req, res) => {
           await this.jr[r.handler].handler(req, res);

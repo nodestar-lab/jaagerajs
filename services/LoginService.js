@@ -8,7 +8,6 @@ class LoginService {
     initialize() {}
 
     async handleLogin(req, res) {
-        console.log("body is : ", req.body);
         let passport = this.jr.PassportManager.getPassport();
         this.jr.PassportManager.authenticate(req, res);
     }

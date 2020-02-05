@@ -123,12 +123,13 @@ class PassportManager {
                         logger.warn(`--authenticate user : ${JSON.stringify(req.user)}`);
                         // logger.warn(`--session id is ${req.sessionID}`);
                         const token = jwt.sign(user.toJSON(), this.config.secretJWT, {
-                            expiresIn: 60 // 1 day
+                            expiresIn: 24 * 60 * 60 // 1 day
                         });
 
                         return res.send({
                             authenticated: true,
-                            token: token
+                            token: token,
+                            user: req.user
                         });
                     }
                 );
