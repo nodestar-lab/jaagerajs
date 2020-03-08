@@ -34,20 +34,21 @@ class JageeraServer {
             level: "debug",
             transports: [
                 new winston.transports.Console({
-                    format: winston.format.combine(winston.format.colorize(), log_format)
+                    format: winston.format.combine(
+                        winston.format.colorize(),
+                        log_format
+                    )
                 })
             ]
         });
     }
 
     configureServices(files) {
-
         let core_service_path = this.config.path.jr + dir_service;
         for (let f of files) {
             var _s = require(core_service_path + "/" + f);
             this[f.split(".")[0]] = new _s(this.config, this);
         }
-
     }
 
     async setupRoutes(routes, s_path) {
@@ -63,6 +64,7 @@ class JageeraServer {
     }
 
     async setupURL(routes) {
+        // write generic code to initialize all servcies
         this.PassportManager.initialize();
 
         let passport = this.PassportManager.getPassport();
@@ -70,7 +72,7 @@ class JageeraServer {
         this.api = this.ExpressAPI.getAPI();
         this.SessionManager.manageAPI(this.api, passport);
         this.MailService.initialize();
-
+        this.ModuleService.initialize();
         await this.SetupRouter.routeSetup(routes, this.api, passport);
         await this.startServer(this.api);
     }
