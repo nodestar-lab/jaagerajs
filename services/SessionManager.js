@@ -16,7 +16,7 @@ class SessionManager {
 
     api.use(
       bodyParser.urlencoded({
-        extended: true
+        extended: true,
       })
     );
     /* later use it for futher additional origins 
@@ -27,7 +27,7 @@ class SessionManager {
             */
     api.use(cors());
 
-    api.use(function (req, res, next) {
+    api.use(function(req, res, next) {
       res.header("Access-Control-Allow-Origin", "http://localhost:4200"); // update to match the domain you will make the request from
       res.header(
         "Access-Control-Allow-Headers",
@@ -59,11 +59,11 @@ class SessionManager {
     //     next();
     // });
 
-    api.use(function (err, req, res, next) {
+    api.use(function(err, req, res, next) {
       logger.error("inside the error handler function ");
       let erorrObj = this.jr.JageeraErrorHandler.handleError(err);
       res.status(erorrObj.code).send({
-        error: erorrObj
+        error: erorrObj,
       });
     });
 
@@ -98,19 +98,27 @@ class SessionManager {
     api.get(
       "/google",
       passport.authenticate("google", {
-        scope: ["profile"]
+        scope: ["profile"],
       })
     );
 
     api.get("/_m/:identifier", (req, res) => {
       this.jr.ModuleService.find(req, res);
     });
+
+    api.get("/_a/:identifier", (req, res) => {
+      this.jr.ActionManager.getForm(req, res);
+    });
+
+    api.post("/_as/:identifier", (req, res) => {
+      this.jr.ActionManager.saveForm(req, res);
+    });
   }
 
   createSession(request, param) {
     request.session.user = {
       username: param.username,
-      userId: param._id
+      userId: param._id,
     };
   }
 
