@@ -15,18 +15,32 @@ class SetupRouter {
               session: false
             }),
             async (req, res) => {
-              await this.jr[r.handler].handler(req, res);
+              if (r.method) {
+                await this.jr[r.handler][r.method](req, res);
+              } else {
+                await this.jr[r.handler].handler(req, res);
+              }
             }
           );
         } else {
-          console.log("not auth route is ... ", r);
+          console.log("not authenticated route", r.route);
           api[r.request_type](r.route, async (req, res) => {
-            await this.jr[r.handler].handler(req, res);
+            if (r.method) {
+              await this.jr[r.handler][r.method](req, res);
+            } else {
+              await this.jr[r.handler].handler(req, res);
+            }
           });
         }
       }
       return resolve();
     });
+  }
+
+  getRequiredParams(req) {
+    let params = req.params || {};
+    let body = req.body || {};
+    return { params: params, body: body };
   }
 }
 

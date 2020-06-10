@@ -1,5 +1,6 @@
 "use strict";
 const dir_service = "/services";
+const dir_routes = "/routes/routes";
 const fs = require("fs");
 const winston = require("winston");
 const logLevel = "debug";
@@ -21,18 +22,18 @@ class JageeraServer {
   setupServices() {
     let files = fs.readdirSync(this.config.path.jr + dir_service);
     this.createLogger();
-    this.configureServices(files);
+    this.configureCoreServices(files);
     return Promise.resolve();
   }
 
   createLogger() {
     let log_format = winston.format.combine(
       winston.format.colorize({
-        all: true,
+        all: true
       }),
 
       winston.format.timestamp({
-        format: "DD-MM-YYYY HH:MM:SS",
+        format: "DD-MM-YYYY HH:MM:SS"
       }),
       winston.format.printf(
         (info) => `${info.timestamp}  ${info.level} : ${info.message}`
@@ -42,47 +43,56 @@ class JageeraServer {
       level: "debug",
       transports: [
         new winston.transports.Console({
-          format: winston.format.combine(winston.format.colorize(), log_format),
-        }),
-      ],
+          format: winston.format.combine(winston.format.colorize(), log_format)
+        })
+      ]
     });
   }
 
-  configureServices(files) {
+  configureCoreServices(files) {
     let core_service_path = this.config.path.jr + dir_service;
     for (let f of files) {
-      var _s = require(core_service_path + "/" + f);
+      let _s = require(core_service_path + "/" + f);
       this[f.split(".")[0]] = new _s(this.config, this);
     }
   }
 
   async setupRoutes(routes, s_path) {
-    this.setupAdditonalServices(routes, s_path);
+    this.configureServices(routes, s_path);
     await this.setupURL(routes);
   }
 
-  setupAdditonalServices(routes, s_path) {
-    for (let r of routes) {
-      var _s = require(s_path + r.handler);
-      this[r.handler] = new _s(this.config, this);
+  configureServices(routes, s_path) {
+    let servicePath = this.config.path.app + "/src" + dir_service;
+    // TODO handle properly
+    let files = fs.readdirSync(servicePath);
+    for (let f of files) {
+      let _s = require(servicePath + "/" + f);
+      this[f.split(".")[0]] = new _s(this.config, this);
     }
   }
 
   async setupURL(routes) {
     // write generic code to initialize all servcies
+    let coreRoutes = require(this.config.path.jr + dir_routes);
+
     this.PassportManager.initialize();
 
     let passport = this.PassportManager.getPassport();
 
     this.api = this.ExpressAPI.getAPI();
-    // db service intialize
+    // give initialize to all the service
     this.SessionManager.manageAPI(this.api, passport);
     this.MailService.initialize();
     this.ModuleService.initialize();
+    this.ComponentService.initialize();
     this.ActionManager.initialize();
-    await this.SetupRouter.routeSetup(routes, this.api, passport);
+    let allRoutes = routes.concat(coreRoutes);
+    await this.SetupRouter.routeSetup(allRoutes, this.api, passport);
     await this.startServer(this.api);
   }
+
+  async initializeServices() {}
 
   async startServer(app) {
     await this.ManageServer.runServer(app);
