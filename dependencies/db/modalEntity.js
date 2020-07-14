@@ -18,7 +18,7 @@ class modalEntity {
   createIndexes(indexes) {
     for (let inx of indexes) {
       this.modal.createIndexes({
-        [inx.key]: inx.value
+        [inx.key]: inx.value,
       });
     }
   }
@@ -30,7 +30,7 @@ class modalEntity {
   async save(data) {
     var inst = this.getInstanceofModel(data);
     // var isvalid = _vaidator(inst);
-    return new Promise(function(resolve, reject) {
+    return new Promise(function (resolve, reject) {
       inst
         .save()
         .then((res) => {
@@ -70,7 +70,7 @@ class modalEntity {
     return this.modal
       .findOne(query)
       .then((res) => {
-        return res;
+        return res.toObject();
       })
       .catch((e) => {
         console.log("error occur while finding one record");
@@ -92,7 +92,9 @@ class modalEntity {
     return this.modal
       .find(query)
       .then((res) => {
-        return res;
+        return res.map(function (model) {
+          return model.toObject();
+        });
       })
       .catch((e) => {
         console.log("error occure while performing action ");

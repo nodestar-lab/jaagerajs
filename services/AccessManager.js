@@ -5,7 +5,9 @@ class AccessManager {
     logger.info("[*AccessManager]");
   }
 
-  intialize() {}
+  intialize() {
+
+  }
 
   setup(modules) {}
 

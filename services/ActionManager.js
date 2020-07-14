@@ -1,3 +1,5 @@
+const Helper = require("../dependencies/action");
+
 class ActionManager {
   constructor(config, jr) {
     this.config = config;
@@ -29,6 +31,7 @@ class ActionManager {
     let opts = req.body;
     let id = opts.identifier;
     let action = this.actions[id];
+    let helper = new Helper(this.config, this.jr, action);
     let saveFn = action.save ? action.save : {};
     let values;
     if (typeof saveFn == "function") {
@@ -50,6 +53,7 @@ class ActionManager {
 
   async saveData(act, val) {
     let dbConfig = act.db_config;
+    let fields = act.form.fields;
     if (act.type == "update") {
     }
     if (act.type == "delete") {

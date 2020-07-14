@@ -29,11 +29,11 @@ class JageeraServer {
   createLogger() {
     let log_format = winston.format.combine(
       winston.format.colorize({
-        all: true
+        all: true,
       }),
 
       winston.format.timestamp({
-        format: "DD-MM-YYYY HH:MM:SS"
+        format: "DD-MM-YYYY HH:MM:SS",
       }),
       winston.format.printf(
         (info) => `${info.timestamp}  ${info.level} : ${info.message}`
@@ -43,9 +43,9 @@ class JageeraServer {
       level: "debug",
       transports: [
         new winston.transports.Console({
-          format: winston.format.combine(winston.format.colorize(), log_format)
-        })
-      ]
+          format: winston.format.combine(winston.format.colorize(), log_format),
+        }),
+      ],
     });
   }
 
@@ -75,21 +75,21 @@ class JageeraServer {
   async setupURL(routes) {
     // write generic code to initialize all servcies
     let coreRoutes = require(this.config.path.jr + dir_routes);
+    let allRoutes = routes.concat(coreRoutes);
 
-    this.PassportManager.initialize();
-
-    let passport = this.PassportManager.getPassport();
-
+    await this.PassportManager.initialize();
+    this.passport = this.PassportManager.getPassport();
     this.api = this.ExpressAPI.getAPI();
     // give initialize to all the service
-    this.SessionManager.manageAPI(this.api, passport);
-    this.MailService.initialize();
-    this.ModuleService.initialize();
-    this.ComponentService.initialize();
-    this.ActionManager.initialize();
-    let allRoutes = routes.concat(coreRoutes);
-    await this.SetupRouter.routeSetup(allRoutes, this.api, passport);
-    await this.startServer(this.api);
+    this.SessionManager.manageAPI(this.api, this.passport);
+    this.MailService.initialize()
+      .then(() => this.ModuleService.initialize())
+      .then(() => this.ComponentService.initialize())
+      .then(() => this.ActionManager.initialize())
+      .then(() =>
+        this.SetupRouter.routeSetup(allRoutes, this.api, this.passport)
+      )
+      .then(() => this.startServer(this.api));
   }
 
   async initializeServices() {}

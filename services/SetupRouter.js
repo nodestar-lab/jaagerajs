@@ -8,13 +8,15 @@ class SetupRouter {
   async routeSetup(routes, api, passport) {
     return new Promise((resolve, reject) => {
       for (let r of routes) {
+        let strategy = r.strategy || "jwt";
         if (r.authenticate) {
           api[r.request_type](
             r.route,
-            passport.authenticate("jwt", {
-              session: false
+            passport.authenticate(strategy, {
+              session: false,
             }),
             async (req, res) => {
+              logger.warn(`route : ${r.route}`);
               if (r.method) {
                 await this.jr[r.handler][r.method](req, res);
               } else {
@@ -25,6 +27,7 @@ class SetupRouter {
         } else {
           console.log("not authenticated route", r.route);
           api[r.request_type](r.route, async (req, res) => {
+            logger.warn(`route : ${r.route}`);
             if (r.method) {
               await this.jr[r.handler][r.method](req, res);
             } else {
