@@ -20,10 +20,12 @@ Jageerajs is framework based on Nodejs, Express and MongoDB. It is generic frame
 ### UploadService
 
 ## How to run app 
-Clone jaageerjs 
+
+#### Clone jaageerjs 
 run 
-1)npm install 
-Clone ecommerce admin
+1) npm install
+
+#### Clone ecommerce admin
 run
 1) npm install
 2) npm start
